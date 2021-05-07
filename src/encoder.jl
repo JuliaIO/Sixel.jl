@@ -21,7 +21,13 @@ function SixelEncoder(io::IO, img::AbstractArray)
     SixelEncoder(io, colorbits, pixelformat, allocator)
 end
 
-function (enc::SixelEncoder)(img::AbstractMatrix; transpose=true)
+function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv)::Cint
+    io = unsafe_load(priv)
+    buffer = unsafe_wrap(Vector{Cchar}, buffer_ptr, (sz, ))
+    return Cint(write(io, buffer))
+end
+
+function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:IO}
     img = transpose ? PermutedDimsArray(img, (2, 1)) : img
     bytes = enforce_sixel_type(img)
     bytes === img && transpose && (bytes = collect(bytes))
@@ -35,13 +41,13 @@ function (enc::SixelEncoder)(img::AbstractMatrix; transpose=true)
     # If we predefine it and `output` in the `SixelEncoder` constructor, it throws
     # runtime unknown function segmentation fault.
     # Well.. This is all I can get with my limited understanding of C and C-Julia interop.
-    function fn_write_local(buffer_ptr, sz, priv)
-        buffer = unsafe_wrap(Array{Cchar}, buffer_ptr, (sz, ); own=false)
-        # io = unsafe_load(priv)
-        Cint(write(enc.io, buffer))
-    end
-    fn_write = @cfunction($fn_write_local, Cint, (Ptr{Cchar}, Cint, Ptr{Cvoid}))
-    output = SixelOutput(fn_write, Ref(enc.io); allocator=enc.allocator)
+    # function fn_write_local(buffer_ptr, sz, priv)
+    #     buffer = unsafe_wrap(Array{Cchar}, buffer_ptr, (sz, ); own=false)
+    #     # io = unsafe_load(priv)
+    #     Cint(write(enc.io, buffer))
+    # end
+    fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
+    output = SixelOutput(fn_write_cb, Ref(enc.io); allocator=enc.allocator)
 
     status = Sixel.C.sixel_encode(bytes, width, height, depth, dither.ptr, output.ptr)
     check_status(status)
