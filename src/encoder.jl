@@ -1,7 +1,7 @@
 abstract type AbstractEncoder end
 
-struct SixelEncoder{I<:IO} <: AbstractEncoder
-    io::I
+struct SixelEncoder{T<:IO} <: AbstractEncoder
+    io::T
     colorbits::Int
     pixelformat::Int
 
@@ -13,18 +13,33 @@ struct SixelEncoder{I<:IO} <: AbstractEncoder
     allocator::SixelAllocator
 end
 
+function Base.show(io::IO, enc::SixelEncoder{T}) where T
+    println(io,
+        "SixelEncoder(::", T,
+        ", colorbits=", enc.colorbits,
+        ", pixelformat=", enc.pixelformat,
+        ")"
+    )
+end
+
 function SixelEncoder(io::IO, img::AbstractArray)
     allocator = SixelAllocator()
 
     colorbits = default_colorbits(img)
     pixelformat = default_pixelformat(img)
+    io = maybe_convert(SixelIOBuffer, io)
     SixelEncoder(io, colorbits, pixelformat, allocator)
 end
 
 function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv::Ref{T})::Cint where {T<:IO}
     io = unsafe_load(Base.unsafe_convert(Ptr{T}, priv))
     buffer = unsafe_wrap(Array{Cchar}, buffer_ptr, (sz, ))
-    write(io, buffer)
+
+    maybe_restore!(io)
+    outsz = write(io, buffer)
+    maybe_store!(io)
+
+    return outsz
 end
 
 function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:IO}
@@ -37,20 +52,12 @@ function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:I
 
     dither = SixelDither(bytes, width, height, enc.pixelformat; allocator=enc.allocator)
 
-    # This runtime function only lives in local scope so we have to define it here
-    # If we predefine it and `output` in the `SixelEncoder` constructor, it throws
-    # runtime unknown function segmentation fault.
-    # Well.. This is all I can get with my limited understanding of C and C-Julia interop.
-    # function fn_write_local(buffer_ptr, sz, priv)
-    #     buffer = unsafe_wrap(Array{Cchar}, buffer_ptr, (sz, ); own=false)
-    #     # io = unsafe_load(priv)
-    #     Cint(write(enc.io, buffer))
-    # end
     fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
     output = SixelOutput(fn_write_cb, Ref{T}(enc.io); allocator=enc.allocator)
 
     status = Sixel.C.sixel_encode(bytes, width, height, depth, dither.ptr, output.ptr)
     check_status(status)
+
     return nothing
 end
 

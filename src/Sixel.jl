@@ -22,6 +22,7 @@ using .C
 
 # The julia part of API that hides all C details
 include("types.jl")
+include("buffer.jl")
 include("encoder.jl")
 # include("encoder.jl")
 
