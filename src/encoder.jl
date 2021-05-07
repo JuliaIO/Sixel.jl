@@ -21,10 +21,10 @@ function SixelEncoder(io::IO, img::AbstractArray)
     SixelEncoder(io, colorbits, pixelformat, allocator)
 end
 
-function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv)::Cint
-    io = unsafe_load(priv)
-    buffer = unsafe_wrap(Vector{Cchar}, buffer_ptr, (sz, ))
-    return Cint(write(io, buffer))
+function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv::Ref{T})::Cint where {T<:IO}
+    io = unsafe_load(Base.unsafe_convert(Ptr{T}, priv))
+    buffer = unsafe_wrap(Array{Cchar}, buffer_ptr, (sz, ))
+    write(io, buffer)
 end
 
 function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:IO}
@@ -47,7 +47,7 @@ function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:I
     #     Cint(write(enc.io, buffer))
     # end
     fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
-    output = SixelOutput(fn_write_cb, Ref(enc.io); allocator=enc.allocator)
+    output = SixelOutput(fn_write_cb, Ref{T}(enc.io); allocator=enc.allocator)
 
     status = Sixel.C.sixel_encode(bytes, width, height, depth, dither.ptr, output.ptr)
     check_status(status)
