@@ -156,7 +156,7 @@ const sixel_output_t = sixel_output
 const sixel_write_function = Ptr{Cvoid}
 
 function sixel_output_new(output, fn_write, priv, allocator)
-    ccall((:sixel_output_new, libsixel), SIXELSTATUS, (Ptr{Ptr{sixel_output_t}}, sixel_write_function, Ptr{Cvoid}, Ptr{sixel_allocator_t}), output, fn_write, priv, allocator)
+    ccall((:sixel_output_new, libsixel), SIXELSTATUS, (Ptr{Ptr{sixel_output_t}}, sixel_write_function, Any, Ptr{sixel_allocator_t}), output, fn_write, priv, allocator)
 end
 
 function sixel_output_create(fn_write, priv)
