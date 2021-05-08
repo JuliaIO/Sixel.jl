@@ -2,8 +2,6 @@ abstract type AbstractEncoder end
 
 struct SixelEncoder{T<:IO} <: AbstractEncoder
     io::T
-    colorbits::Int
-    pixelformat::Int
 
     # (Experimental) internal fields
 
@@ -13,33 +11,17 @@ struct SixelEncoder{T<:IO} <: AbstractEncoder
     allocator::SixelAllocator
 end
 
-function Base.show(io::IO, enc::SixelEncoder{T}) where T
-    println(io,
-        "SixelEncoder(::", T,
-        ", colorbits=", enc.colorbits,
-        ", pixelformat=", enc.pixelformat,
-        ")"
-    )
-end
-
 function SixelEncoder(io::IO, img::AbstractArray)
     allocator = SixelAllocator()
+    SixelEncoder(io, allocator)
+end
 
-    colorbits = default_colorbits(img)
-    pixelformat = default_pixelformat(img)
-    io = maybe_convert(SixelIOBuffer, io)
-    SixelEncoder(io, colorbits, pixelformat, allocator)
+function Base.show(io::IO, enc::SixelEncoder{T}) where T
+    print(io, "SixelEncoder(::", typeof(io), ")")
 end
 
 function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv::Ref{T})::Cint where {T<:IO}
-    io = unsafe_load(Base.unsafe_convert(Ptr{T}, priv))
-    buffer = unsafe_wrap(Array{Cchar}, buffer_ptr, (sz, ))
-
-    maybe_restore!(io)
-    outsz = write(io, buffer)
-    maybe_store!(io)
-
-    return outsz
+    unsafe_write(priv[], buffer_ptr, sz)
 end
 
 function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:IO}
@@ -47,10 +29,13 @@ function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:I
     bytes = enforce_sixel_type(img)
     bytes === img && transpose && (bytes = collect(bytes))
 
+    # colorbits = default_colorbits(bytes)
+    pixelformat = default_pixelformat(bytes)
+    quality_mode = default_quality_mode(bytes)
     width, height = size(bytes)
     depth = 3 # unused
 
-    dither = SixelDither(bytes, width, height, enc.pixelformat; allocator=enc.allocator)
+    dither = SixelDither(bytes, width, height, pixelformat, quality_mode; allocator=enc.allocator)
 
     fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
     output = SixelOutput(fn_write_cb, Ref{T}(enc.io); allocator=enc.allocator)
@@ -59,6 +44,18 @@ function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:I
     check_status(status)
 
     return nothing
+end
+
+
+"""
+    sixel_encode([io=stdout], img)
+
+Encode bytes array `img` as sixel control sequence.
+"""
+sixel_encode(img::AbstractArray) = sixel_encode(stdout, img)
+function sixel_encode(io::IO, img::AbstractArray)
+    enc = SixelEncoder(io, img)
+    enc(img)
 end
 
 # libsixel only supports at most 8bits format
@@ -105,3 +102,14 @@ default_colorbits(::AbstractArray{C}) where C<:Colorant = default_colorbits(C)
 default_colorbits(::Type{C}) where C<:Union{AlphaColor, ColorAlpha} = default_colorbits(color_type(C))
 default_colorbits(::Type{C}) where C<:AbstractRGB = 8
 default_colorbits(::Type{C}) where C<:AbstractGray = 8
+
+"""
+    default_quality_mode(img)
+    default_quality_mode(C)
+
+Infer the default quality mode that used to encode pixel.
+"""
+default_quality_mode(::AbstractArray{C}) where C<:Colorant = default_quality_mode(C)
+default_quality_mode(::Type{CT}) where CT<:AbstractRGB = C.SIXEL_QUALITY_AUTO
+# CHECK: highcolor is needed for iTerm2 on macOS, check if this works on other terminal
+default_quality_mode(::Type{CT}) where CT<:AbstractGray = C.SIXEL_QUALITY_HIGHCOLOR

@@ -14,6 +14,8 @@
 # [Clang.jl]: https://github.com/JuliaInterop/Clang.jl
 module Sixel
 
+export sixel_encode
+
 using Colors, FixedPointNumbers
 using FileIO
 
@@ -22,13 +24,6 @@ using .C
 
 # The julia part of API that hides all C details
 include("types.jl")
-include("buffer.jl")
 include("encoder.jl")
-# include("encoder.jl")
-
-# TODO: create a julia struct for encoder, and pass more informations
-# function __init__()
-#     _check_encoder!(DEFAULT_ENCODER; verbose=false)
-# end
 
 end
