@@ -1,67 +1,64 @@
-# TODO: check if we can make it an immutable struct
-"""
-    Encoder(; kwargs...)
+abstract type AbstractEncoder end
 
-Create a libsixel encoder.
-"""
-mutable struct Encoder
-    ptr::Ptr{Cvoid}
+struct SixelEncoder{T<:IO} <: AbstractEncoder
+    io::T
+
+    # (Experimental) internal fields
+
+    # We need `allocator` to constructor libsixel objects, however, users of this
+    # Julia package is not expected to use this field as it really should just live
+    # in the C world.
+    allocator::SixelAllocator
 end
 
-const DEFAULT_ENCODER = Encoder(C_NULL)
-function encode(file_or_image; kwargs...)
-    enc = _check_encoder!(DEFAULT_ENCODER; verbose=true)
-    encode(enc, file_or_image; kwargs...)
+function SixelEncoder(io::IO, img::AbstractArray)
+    allocator = SixelAllocator()
+    SixelEncoder(io, allocator)
 end
 
-"""
-    encode([encoder,] img)
-    encode([encoder,] filename)
-
-Encode image `img` or image file `filename` with libsixel encoder `encoder`.
-
-# Example
-
-```julia
-using TestImages, Sixel
-img = testimage("cameraman")
-
-Sixel.encode(img)
-```
-
-See [`Encoder`](@ref) for more information.
-"""
-function encode end
-
-function encode(enc::Encoder, filename::AbstractString)
-   error("Not implemented.") 
+function Base.show(io::IO, enc::SixelEncoder{T}) where T
+    print(io, "SixelEncoder(::", typeof(io), ")")
 end
 
-function encode(enc::Encoder, img::AbstractMatrix; transpose=should_transpose(img))
-    # TODO: both permutedims and enforce_sixel_type allocates memory. We can mix these
-    #       two operations to reduce memory allocations.
-    img = enforce_sixel_type(img)
+function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv::Ref{T})::Cint where {T<:IO}
+    unsafe_write(priv[], buffer_ptr, sz)
+end
 
-    # unsupported type C will trigger an error here
-    pixelformat = default_pixelformat(img)
-    palette = default_palette(img)
-    ncolors = default_ncolors(img)
-    
-    # TODO: is this memory allocation unavoidable?
-    #       (1) Maybe, for performance, we should use the low-level API?
-    #       (2) is it possible to pass a buffer block to the high-level API?
-    bytes = transpose ? permutedims(img, (2, 1)) : img
-    width, height = size(bytes) # sixel uses row-major order
-    Sixel.C.sixel_encoder_encode_bytes(enc.ptr, bytes, width, height, pixelformat, palette, ncolors)
-    
+function (enc::SixelEncoder{T})(img::AbstractMatrix; transpose=true) where {T<:IO}
+    img = transpose ? PermutedDimsArray(img, (2, 1)) : img
+    bytes = enforce_sixel_type(img)
+    bytes === img && transpose && (bytes = collect(bytes))
+
+    # colorbits = default_colorbits(bytes)
+    pixelformat = default_pixelformat(bytes)
+    quality_mode = default_quality_mode(bytes)
+    width, height = size(bytes)
+    depth = 3 # unused
+
+    dither = SixelDither(bytes, width, height, pixelformat, quality_mode; allocator=enc.allocator)
+
+    fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
+    output = SixelOutput(fn_write_cb, Ref{T}(enc.io); allocator=enc.allocator)
+
+    status = Sixel.C.sixel_encode(bytes, width, height, depth, dither.ptr, output.ptr)
+    check_status(status)
+
     return nothing
 end
 
-# TODO: enhance this with more possibilities
-should_transpose(img::AbstractMatrix) = false
-should_transpose(img::Matrix) = true
 
-# libsixel only supports 8bits format
+"""
+    sixel_encode([io=stdout], img)
+
+Encode bytes array `img` as sixel control sequence.
+"""
+sixel_encode(img::AbstractArray) = sixel_encode(stdout, img)
+function sixel_encode(io::IO, img::AbstractArray)
+    enc = SixelEncoder(io, img)
+    enc(img)
+end
+
+# libsixel only supports at most 8bits format
 enforce_sixel_type(img::AbstractArray{<:Colorant{N0f8}}) = img
 enforce_sixel_type(img::AbstractArray{<:Colorant}) = n0f8.(img)
 enforce_sixel_type(img::AbstractArray{<:Real}) = Gray{N0f8}.(img)
@@ -94,45 +91,25 @@ default_pixelformat(::Type{Gray{N0f8}})  = Sixel.C.SIXEL_PIXELFORMAT_G8
 # Gray2, Gray4 are not used in JuliaImages
 # TODO: Gray1, i.e., Gray{Bool} is not supported yet.
 
-"""
-    default_palette(img)
-    default_patette(C)
-
-Infer the default libsixel `palette` for image `img` or colorant type `C`.
-
-See `SIXEL_OPTFLAG_BUILTIN_PALETTE` in `sixel.h` for a complete list.
-"""
-default_palette(::AbstractArray{C}) where C<:Colorant = default_palette(C)
-# TODO: keep the result, evaluate the `map` once.
-# TODO: and optionally use `xterm16` when the terminal does not support it.
-default_palette(::Type{C}) where C<:Union{AlphaColor, ColorAlpha} = default_palette(color_type(C))
-default_palette(::Type{C}) where C<:AbstractRGB = map(UInt8, collect("xterm256"))
-default_palette(::Type{C}) where C<:AbstractGray = map(UInt8, collect("gray8"))
 
 """
-    default_ncolors(img)
-    default_ncolors(C)
+    default_colorbits(img)
+    default_colorbits(C)
 
-Infer the default libsixel `ncolors` for image `img` or colorant type `C`.
-    
-`ncolors` is the number of colors used for given palette.
+Infer the default number of bits that used to represent a color.
 """
-default_ncolors(::AbstractArray{C}) where C<:Colorant = default_ncolors(C)
-# CHECK: maybe we can just use `-1` here. The `libsixel` internal implementation seems to interprete
-#        this as `SIXEL_PALETTE_MAX`.
-#        https://github.com/saitoha/libsixel/blob/6a5be8b72d84037b83a5ea838e17bcf372ab1d5f/src/dither.c#L287-L289
-# NOTE: we use default value 256 because we currently only support `xterm256` and `gray8` palette
-#       For a complete reference, see:
-#       https://github.com/saitoha/libsixel/blob/6a5be8b72d84037b83a5ea838e17bcf372ab1d5f/src/dither.c#L404-L457
-default_ncolors(::Type{C}) where C<:Union{AlphaColor, ColorAlpha} = default_ncolors(color_type(C))
-default_ncolors(::Type{C}) where C<:AbstractRGB = 256
-default_ncolors(::Type{C}) where C<:AbstractGray = 256
+default_colorbits(::AbstractArray{C}) where C<:Colorant = default_colorbits(C)
+default_colorbits(::Type{C}) where C<:Union{AlphaColor, ColorAlpha} = default_colorbits(color_type(C))
+default_colorbits(::Type{C}) where C<:AbstractRGB = 8
+default_colorbits(::Type{C}) where C<:AbstractGray = 8
 
+"""
+    default_quality_mode(img)
+    default_quality_mode(C)
 
-function _check_encoder!(enc; verbose=true)
-    if enc.ptr === C_NULL
-        verbose && @info "Found Invalid encoder. Use default encoder as a fallback."
-        enc.ptr = Sixel.C.sixel_encoder_create()
-    end
-    return enc
-end
+Infer the default quality mode that used to encode pixel.
+"""
+default_quality_mode(::AbstractArray{C}) where C<:Colorant = default_quality_mode(C)
+default_quality_mode(::Type{CT}) where CT<:AbstractRGB = C.SIXEL_QUALITY_AUTO
+# CHECK: highcolor is needed for iTerm2 on macOS, check if this works on other terminal
+default_quality_mode(::Type{CT}) where CT<:AbstractGray = C.SIXEL_QUALITY_HIGHCOLOR
