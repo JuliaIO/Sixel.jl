@@ -37,8 +37,14 @@ mutable struct SixelDither
         check_status(status)
         ptr = ptr_ref[]
         C.sixel_dither_initialize(ptr,
-            data, width, height, pixelformat,
-            method_for_largest, method_for_rep, quality_mode)
+            data,
+            Int32(width),
+            Int32(height),
+            Int32(pixelformat),
+            Int32(method_for_largest),
+            Int32(method_for_rep),
+            Int32(quality_mode)
+        )
         new(ptr)
     end
 end

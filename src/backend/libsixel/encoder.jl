@@ -10,24 +10,36 @@ struct LibSixelEncoder <: AbstractSixelEncoder
         new(allocator)
     end
 end
- 
+
 function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv::Ref{T})::Cint where {T<:IO}
     unsafe_write(priv[], buffer_ptr, sz)
 end
 
-function (enc::LibSixelEncoder)(io::T, img::Array) where {T<:IO}
-    # colorbits = default_colorbits(img)
-    pixelformat = default_pixelformat(img)
-    quality_mode = default_quality_mode(img)
-    width, height = size(img)
+# sixel = six pixels
+const libsixel_min_pixels = 6
+
+# libsixel backend requires contiguous memeory layout, to avoid unexpected bugs
+# we limit ourself to `Matrix` type and let the frontend API `sixel_encode` transforms
+# other fancy array types into `Matrix`.
+function (enc::LibSixelEncoder)(io::T, bytes::Matrix) where {T<:IO}
+    # colorbits = default_colorbits(bytes)
+    pixelformat = default_pixelformat(bytes)
+    quality_mode = default_quality_mode(bytes)
+
+    if any(n->n<libsixel_min_pixels, size(bytes))
+        # constant 2 is for better visual experiences
+        n = ceil.(Int, 2libsixel_min_pixels ./ size(bytes))
+        bytes = repeat(bytes, inner=n)
+    end
+    height, width = size(bytes)
     depth = 3 # unused
 
-    dither = SixelDither(img, width, height, pixelformat, quality_mode; allocator=enc.allocator)
+    dither = SixelDither(bytes, height, width, pixelformat, quality_mode; allocator=enc.allocator)
 
     fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
     output = SixelOutput(fn_write_cb, Ref{T}(io); allocator=enc.allocator)
 
-    status = C.sixel_encode(img, width, height, depth, dither.ptr, output.ptr)
+    status = C.sixel_encode(bytes, height, width, depth, dither.ptr, output.ptr)
     check_status(status)
 
     return nothing
@@ -76,16 +88,15 @@ default_colorbits(::Type{C}) where C<:AbstractRGB = 8
 default_colorbits(::Type{C}) where C<:AbstractGray = 8
 
 
-SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Type{CT}) where CT<:Colorant{N0f8} = CT
-SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Type{CT}) where CT<:Colorant = n0f8(CT)
-SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Type{T}) where T<:Real = Gray{N0f8}
+SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Colorant = n0f8(CT)
+SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{T}) where T<:Real = N0f8
 # TODO: these special types might have native libsixel support, but I haven't
 #       figured it out yet.
-# SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Type{Bool}) = Gray{N0f8}
-# SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Type{Gray{Bool}}) = Gray{N0f8}
-# SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Gray24) = Gray{N0f8}
-# SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::RGB24) = RGB{N0f8}
-# SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::ARGB32) = ARGB{N0f8}
+# SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{Bool}) = Gray{N0f8}
+# SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{Gray{Bool}}) = Gray{N0f8}
+# SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Gray24) = Gray{N0f8}
+# SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::RGB24) = RGB{N0f8}
+# SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::ARGB32) = ARGB{N0f8}
 # TODO: For unknown reasons, AGray and GrayA encoded by libsixel is not correctly displayed
 #       in iTerm. Thus here we convert it to `ARGB` types.
-# SixelInterface.canonical_colorant_type(::LibSixelEncoder, ::Union{AGray, GrayA}) = ARGB{N0f8}
+# SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Union{AGray, GrayA}) = ARGB{N0f8}

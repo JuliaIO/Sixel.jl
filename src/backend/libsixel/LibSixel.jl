@@ -28,8 +28,7 @@ module LibSixel
     using .C
     include("types.jl")
 
-    using Colors
-    using Colors.FixedPointNumbers
+    using ImageCore
     include("encoder.jl")  # high-level encoder API
     # include("decoder.jl") # high-level decoder API
 end

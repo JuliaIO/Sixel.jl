@@ -5,7 +5,7 @@ export AbstractSixelDecoder,
        AbstractSixelEncoder,
        sixel_encode,
        sixel_decode,
-       canonical_colorant_type
+       canonical_sixel_eltype
 
 abstract type AbstractSixelEncoder end
 (enc::AbstractSixelEncoder)(io, src) = error("The encoder functor method for inputs (::$(typeof(io)), ::$(typeof(src)) is not implemented.")
@@ -52,11 +52,11 @@ Decode the sixel format sequence provided by `src` and write into a writable io-
 function sixel_decode(::Any, ::Any, ::AbstractSixelDecoder) end
 
 """
-    canonical_colorant_type(enc, CT1) -> CT2
+    canonical_sixel_eltype(enc, CT1) -> CT2
 
 Given input type `CT1`, infer the expected colorant type `CT2` for encoder `enc`. This function is
 used to early convert the image data into formats that backend encoder (e.g., the C libsixel) understands.
 """
-function canonical_colorant_type(::AbstractSixelEncoder, ::DataType) end
+function canonical_sixel_eltype(::AbstractSixelEncoder, ::DataType) end
 
 end # module

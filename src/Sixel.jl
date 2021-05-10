@@ -2,8 +2,7 @@ module Sixel
 
 export sixel_encode, sixel_decode
 
-using Colors
-using Colors: FixedPointNumbers
+using ImageCore
 
 include("interface.jl")
 using .SixelInterface
@@ -25,4 +24,4 @@ default_encoder(::AbstractArray) = LibSixel.LibSixelEncoder()
 include("encoder.jl")
 # include("decoder.jl)
 
-end
+end # module

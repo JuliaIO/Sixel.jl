@@ -4,15 +4,13 @@ authors = ["Johnny Chen <johnnychen94@hotmail.com>"]
 version = "0.1.0"
 
 [deps]
-Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
+ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
 libsixel_jll = "075b6546-f08a-558a-be8f-8157d0f608a5"
 
 [compat]
-Colors = "0.10, 0.11, 0.12"
 FileIO = "1.6"
-FixedPointNumbers = "0.6, 0.7, 0.8"
+ImageCore = "0.8, 0.9"
 julia = "1.6"
 libsixel_jll = "1.8.6"
 
