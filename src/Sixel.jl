@@ -8,6 +8,9 @@ import REPL: Terminals
 include("interface.jl")
 using .SixelInterface
 
+include("terminaltools.jl")
+using .TerminalTools
+
 include("backend/libsixel/LibSixel.jl")
 using .LibSixel
 
@@ -24,5 +27,19 @@ default_encoder(::AbstractArray) = LibSixel.LibSixelEncoder()
 # instead of in the backends.
 include("encoder.jl")
 # include("decoder.jl)
+
+
+# Ref: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+"""
+    is_sixel_supported(tty=stdout)::Bool
+
+Check if given terminal `tty` supports sixel format.
+
+!!! warning
+    (Experiment) The return value is not fully tested on all terminals and all platforms.
+"""
+function is_sixel_supported(tty=stdout)
+    '4' in TerminalTools.query_terminal("\033[0c", tty)
+end
 
 end # module

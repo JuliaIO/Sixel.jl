@@ -4,6 +4,7 @@ authors = ["Johnny Chen <johnnychen94@hotmail.com>"]
 version = "0.1.0"
 
 [deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
