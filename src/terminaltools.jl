@@ -46,6 +46,8 @@ function with_raw(f, tty::Terminals.TTYTerminal)
     end
 end
 
+query_terminal(msg, io::IO; kwargs...) = ""
+query_terminal(msg, regex, io::IO; kwargs...) = ("", )
 function query_terminal(msg, tty::TTY; timeout=1)
     term = Terminals.TTYTerminal("", stdin, tty, stderr)
     try
