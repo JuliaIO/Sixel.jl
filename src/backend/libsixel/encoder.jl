@@ -89,7 +89,11 @@ default_colorbits(::Type{C}) where C<:AbstractGray = 8
 
 
 SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Colorant = n0f8(CT)
+SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Color3 = RGB{N0f8}
 SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{T}) where T<:Real = N0f8
+# strip the alpha channel before sending into libsixel
+SixelInterface.canonical_sixel_eltype(lib::LibSixelEncoder, ::Type{CT}) where CT<:Union{ColorAlpha, AlphaColor} =
+    canonical_sixel_eltype(lib, base_color_type(CT))
 # TODO: these special types might have native libsixel support, but I haven't
 #       figured it out yet.
 # SixelInterface.canonical_sixel_eltype(::LibSixelEncoder, ::Type{Bool}) = Gray{N0f8}

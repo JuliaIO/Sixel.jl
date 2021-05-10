@@ -7,6 +7,8 @@ import REPL: Terminals
 
 include("interface.jl")
 using .SixelInterface
+const SEC = AbstractSixelEncoder
+const SDC = AbstractSixelDecoder
 
 include("terminaltools.jl")
 using .TerminalTools

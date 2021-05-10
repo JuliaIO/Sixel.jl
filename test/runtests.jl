@@ -1,6 +1,17 @@
 using Sixel
 using Test
+using ImageCore, TestImages
+
+sixel_output = Sixel.is_sixel_supported()
+sixel_output || @info "Current terminal does not support sixel format sequence. Display tests to stdout will be marked as broken."
+function test_sixel_display(f)
+    if sixel_output
+        @test_nowarn f()
+    else
+        @test_broken f()
+    end
+end
 
 @testset "Sixel.jl" begin
-    # Write your tests here.
+    include("backend/libsixel.jl")
 end
