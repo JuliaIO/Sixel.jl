@@ -3,6 +3,7 @@ module Sixel
 export sixel_encode, sixel_decode
 
 using ImageCore
+import REPL: Terminals
 
 include("interface.jl")
 using .SixelInterface

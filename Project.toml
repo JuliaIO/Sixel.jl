@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
+REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 libsixel_jll = "075b6546-f08a-558a-be8f-8157d0f608a5"
 
 [compat]
