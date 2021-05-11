@@ -3,8 +3,6 @@ module SixelInterface
 
 export AbstractSixelDecoder,
        AbstractSixelEncoder,
-       sixel_encode,
-       sixel_decode,
        canonical_sixel_eltype
 
 abstract type AbstractSixelEncoder end
@@ -12,25 +10,6 @@ abstract type AbstractSixelEncoder end
 
 abstract type AbstractSixelDecoder end
 (enc::AbstractSixelDecoder)(io, src) = error("The decoder functor method for inputs (::$(typeof(io)), ::$(typeof(src)) is not implemented.")
-
-"""
-    sixel_encode(io, src, [encoder]) -> io
-
-Encode colorant sequence `src` as sixel sequence and write it into a writable io-like object `io` as output.
-
-# Arguments
-
-- `io`: the output io-like object, which is expected to be writable.
-- `src`: generic container object(e.g., `IO`, `AbstractArray`) that contains the colorant sequence.
-- `encoder::AbstractSixelEncoder`: the sixel encoder.
-
-# References
-
-- [1] VT330/VT340 Programmer Reference Manual, Volume 1: Text Programming
-- [2] VT330/VT340 Programmer Reference Manual, Volume 2: Graphics Programming
-- [3] https://github.com/saitoha/libsixel
-"""
-function sixel_encode(::Any, ::Any, ::AbstractSixelEncoder) end
 
 """
     sixel_decode(io, src, [decoder]) -> io

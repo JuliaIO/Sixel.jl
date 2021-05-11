@@ -1,27 +1,43 @@
 name: CI
 on:
-  - push
-  - pull_request
+  create:
+    tags:
+  push:
+    branches:
+      - master
+  pull_request:
+
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    name: Julia ${{ matrix.julia-version }} - ${{ matrix.os }} - ${{ matrix.julia-arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1'
-          - 'nightly'
         os:
           - ubuntu-latest
-        arch:
+        julia-version:
+          - '1'
+          - 'nightly'
+        julia-arch:
           - x64
+        include:
+          - os: ubuntu-latest
+            julia-version: '1'
+            julia-arch: x86
+          - os: macOS-latest
+            julia-version: '1'
+            julia-arch: x64
+          - os: windows-latest
+            julia-version: '1'
+            julia-arch: x64
+
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          version: ${{ matrix.julia-version }}
+          arch: ${{ matrix.julia-arch }}
       - uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
@@ -38,26 +54,3 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           file: lcov.info
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
-      - run: |
-          julia --project=docs -e '
-            using Documenter: DocMeta, doctest
-            using Sixel
-            DocMeta.setdocmeta!(Sixel, :DocTestSetup, :(using Sixel); recursive=true)
-            doctest(Sixel)'
-      - run: julia --project=docs docs/make.jl
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
