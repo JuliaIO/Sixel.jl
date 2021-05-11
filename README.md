@@ -11,6 +11,8 @@ This package, although itself complete, is probably not the most convinient way 
 users. Package authors that aims to support sixel for various image-like types (e.g., image, video,
 gif, plot, latex) are the potential targeted users of this package.
 
+Windows is not supported yet ([#5](https://github.com/johnnychen94/Sixel.jl/issues/5)).
+
 ## Functions
 
 This package exports two functions: `sixel_encode` and `sixel_decode`.
