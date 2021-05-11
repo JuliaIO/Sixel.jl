@@ -18,11 +18,7 @@ using .LibSixel
 
 
 # Eventually we will rewrite everything in pure Julia :)
-@static if Sys.iswindows()
-    default_encoder(::AbstractArray) = error("Windows is not supported yet (#5).")
-else
-    default_encoder(::AbstractArray) = LibSixel.LibSixelEncoder()
-end
+default_encoder(::AbstractArray) = LibSixel.LibSixelEncoder()
 # default_decoder(::AbstractArray) = LibSIxel.LibSixelDecoder()
 
 
