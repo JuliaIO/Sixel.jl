@@ -9,6 +9,11 @@ Decode the sixel format sequence provided by `src` and output as an indexed imag
 - `src`: the input sixel data source. It can be either an `IO`, `AbstractVector{UInt8}`, or `AbstractString`.
 - `decoder::AbstractSixelDecoder`: the sixel decoder. Currently only `LibSixelDecoder` is available.
 
+!!! warning
+    `sixel_decode` for tiny images (including vectors) is undefined behavior; sixel format requires
+    at least `6` pixels in the row direction. For example, you should not expect it returning a
+    `Vector` data even if it is.
+
 # Parameters
 
 - `transpose::Bool`: whether we need to permute the image's width and height dimension before encoding.
@@ -43,10 +48,7 @@ function sixel_decode(::Type{T}, bytes::AbstractArray, dec=default_decoder(); tr
         throw(ArgumentError("Unsupported decoder type $(typeof(enc)). Please open an issue for this."))
     end
 
-    actual_size = size(index)
-    if expected_size != actual_size
-        @warn "Output size mismatch during decoding sixel sequences" actual_size expected_size
-    end
+    check_size(size(index), expected_size)
     # We use IndirectArray to mark it as an indexed image so as to avoid unnecessary memory allocation
     # Users that expect a dense Array can always call `collect(rst)` or `convert(Array, rst)` on this.
     return IndirectArray(index, values)
@@ -60,10 +62,7 @@ function sixel_decode(::Type{T}, io::IO, dec=default_decoder(); kwargs...) where
     bytes = read(io)
     img = sixel_decode(T, bytes, dec; kwargs...)
 
-    actual_size = size(img)
-    if expected_size != actual_size
-        @warn "Output size mismatch during decoding sixel sequences" actual_size expected_size
-    end
+    check_size(size(img), expected_size)
     return img
 end
 
@@ -112,4 +111,16 @@ function read_sixel_size(io::IO)
         seek(io, p)
     end
     return read_sixel_size(buffer)
+end
+
+function check_size(actual_size, expected_size)
+    valid = length(actual_size)==length(expected_size)
+    valid = valid && all(zip(actual_size, expected_size)) do x
+        # libsixel encode/decode for small images is undefined behavior to us
+        minimum(x) <= 6 && return true
+        x[1] == x[2]
+    end
+    if !valid
+        @warn "Output size mismatch during decoding sixel sequences" actual_size expected_size
+    end
 end

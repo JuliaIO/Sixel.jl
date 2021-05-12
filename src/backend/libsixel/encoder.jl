@@ -15,9 +15,6 @@ function sixel_write_callback_function(buffer_ptr::Ptr{Cchar}, sz::Cint, priv::R
     unsafe_write(priv[], buffer_ptr, sz)
 end
 
-# sixel = six pixels
-const libsixel_min_pixels = 6
-
 # libsixel backend requires contiguous memeory layout, to avoid unexpected bugs
 # we limit ourself to `Matrix` type and let the frontend API `sixel_encode` transforms
 # other fancy array types into `Matrix`.
@@ -26,11 +23,6 @@ function (enc::LibSixelEncoder)(io::T, bytes::Matrix) where {T<:IO}
     pixelformat = default_pixelformat(bytes)
     quality_mode = default_quality_mode(bytes)
 
-    if any(n->n<libsixel_min_pixels, size(bytes))
-        # constant 2 is for better visual experiences
-        n = ceil.(Int, 2libsixel_min_pixels ./ size(bytes))
-        bytes = repeat(bytes, inner=n)
-    end
     height, width = size(bytes)
     depth = 3 # unused
 

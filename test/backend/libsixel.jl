@@ -31,9 +31,7 @@
             io = IOBuffer()
             sixel_encode(io, img, enc)
             bufferdata = String(take!(io))
-            sz = 1, size(img, 1)
-            w, h = ceil.(Int, 12 ./ sz) .* sz # small images are repeated to larger size
-            w, h = h, w # vector is shown in row direction, i.e., transpose=false
+            h, w = size(img, 1), 1
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
             test_sixel_display() do
                 println(bufferdata)
@@ -52,8 +50,8 @@
             @info "transpose check: the first two should look the same, while the third is transposed."
             test_sixel_display() do
                 sixel_encode(img, enc)
-                sixel_encode(img, enc; transpose=true)
                 sixel_encode(img, enc; transpose=false)
+                sixel_encode(img, enc; transpose=true)
             end
         end
     end
@@ -274,7 +272,10 @@ end
         enc = Sixel.LibSixelEncoder()
         dec = Sixel.LibSixelDecoder()
         tmp_file = tempname()
+
         for img in (
+            repeat(Gray.(0:0.1:0.9), inner=10),
+            repeat(distinguishable_colors(10), inner=(10, )),
             repeat(Gray.(0:0.1:0.9), inner=(10, 50)),
             repeat(distinguishable_colors(10), inner=(10, 50)),
             repeat(Gray.(0:0.1:0.9), inner=(10, 50, 3)),
@@ -288,6 +289,7 @@ end
                 sixel_decode(eltype(img), io, dec)
             end
 
+            img_readback = reshape(img_readback, size(img))
             # 30 is actually pretty good given that sixel encode always do quantization
             @test assess_psnr(img, img_readback) > 30
         end
