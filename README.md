@@ -31,6 +31,14 @@ following is an incomplete list of terminals that support sixel.
 
 > Above these I only manually test [iTerm2] and [mlterm].
 
+A demo in Iterm2:
+
+<img src="https://user-images.githubusercontent.com/8684355/118017901-b98f4d80-b389-11eb-93cf-0f99c169121d.png" alt="demo" width="1024" height="800">
+
+
+It is the client terminal that renders the image. Hence if you're using any sixel-enabled terminal (e.g., iTerm2) and connect to other servers via ssh, you
+still get sixel supported. Sixel is nothing special but a string sequence.
+
 Unfortunately, there are some famous widely used advanced terminal/emulator that do not support
 sixel (yet):
 
