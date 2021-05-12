@@ -12,15 +12,18 @@ Encode colorant sequence `src` as sixel sequence and write it into a writable io
   [`LibSixelEncoder`](@ref Sixel.LibSixel.LibSixelEncoder) is available.
 
 !!! warning
-    For better visualization quality, small image (e.g., vector) is repeated into a larger matrix.
-    Hence if you load the encoded small image back using [`sixel_decode`](@ref), the size will not
-    be the same.
+    `sixel_encode` for tiny images (including vectors) is undefined behavior; sixel format requires
+    at least `6` pixels in the row direction. For better visualization result, it's recommended to
+    `repeat`(inner) the data so that its size is larger than `(6, 6)` in both dimensions.
+
+!!! note
+    For array with `ndims(src) >= 3`, it will be concatenated into a 2d array in row order before
+    encoding.
 
 # Parameters
 
 - `transpose::Bool`: whether we need to permute the image's width and height dimension before encoding.
-  For vector input, the default value is `true`, while for other high dimensional array types, the default
-  value is `false`.
+  The default value is `false`.
 
 # Examples
 
@@ -56,8 +59,8 @@ function sixel_encode end
 sixel_encode(img::AbstractArray, enc::SEC=default_encoder(img); kwargs...) =
     sixel_encode(stdout, img, enc; kwargs...)
 
-sixel_encode(io::IO, img::AbstractVector, enc::SEC=default_encoder(img); transpose=true, kwargs...) =
-    sixel_encode(io, reshape(img, :, 1), enc; transpose=transpose, kwargs...)
+sixel_encode(io::IO, img::AbstractVector, enc::SEC=default_encoder(img); kwargs...) =
+    sixel_encode(io, reshape(img, :, 1), enc; kwargs...)
 
 function sixel_encode(io::IO, img::AbstractArray, enc::SEC=default_encoder(img); transpose=false, kwargs...)
     # make sure it always tiles along row order
