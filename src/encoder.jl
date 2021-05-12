@@ -11,6 +11,11 @@ Encode colorant sequence `src` as sixel sequence and write it into a writable io
 - `encoder::AbstractSixelEncoder`: the sixel encoder. Currently, only
   [`LibSixelEncoder`](@ref Sixel.LibSixel.LibSixelEncoder) is available.
 
+!!! warning
+    For better visualization quality, small image (e.g., vector) is repeated into a larger matrix.
+    Hence if you load the encoded small image back using [`sixel_decode`](@ref), the size will not
+    be the same.
+
 # Parameters
 
 - `transpose::Bool`: whether we need to permute the image's width and height dimension before encoding.

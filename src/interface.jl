@@ -12,25 +12,6 @@ abstract type AbstractSixelDecoder end
 (enc::AbstractSixelDecoder)(io, src) = error("The decoder functor method for inputs (::$(typeof(io)), ::$(typeof(src)) is not implemented.")
 
 """
-    sixel_decode(io, src, [decoder]) -> io
-
-Decode the sixel format sequence provided by `src` and write into a writable io-like object `io` as output.
-
-# Arguments
-
-- `io`: the output io-like object, which is expected to be writable.
-- `src`: generic container object(e.g., `IO`, `AbstractArray`, `AbstractString`) that contains the sixel format sequence.
-- `decoder::AbstractSixelDecoder`: the sixel decoder.
-
-# References
-
-- [1] VT330/VT340 Programmer Reference Manual, Volume 1: Text Programming
-- [2] VT330/VT340 Programmer Reference Manual, Volume 2: Graphics Programming
-- [3] https://github.com/saitoha/libsixel
-"""
-function sixel_decode(::Any, ::Any, ::AbstractSixelDecoder) end
-
-"""
     canonical_sixel_eltype(enc, CT1) -> CT2
 
 Given input type `CT1`, infer the expected colorant type `CT2` for encoder `enc`. This function is
