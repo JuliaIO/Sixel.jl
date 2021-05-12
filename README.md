@@ -5,11 +5,11 @@
 [![Coverage](https://codecov.io/gh/johnnychen94/Sixel.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/johnnychen94/Sixel.jl)
 
 Encode the image into a [sixel][sixel_format_wiki] control sequence and vice versa. If your
-terminal supports this format, then you can visually get a nice visualization of it.
+terminal supports this format, then you can get a nice visualization of it.
 
 This package, although itself complete, is probably not the most convinient way to use for normal
 users. Package authors that aims to support sixel for various image-like types (e.g., image, video,
-gif, plot, latex) are the potential targeted users of this package.
+gif, graphic, plot, latex) are the potential targeted users of this package.
 
 The core functionality of this package is supported by the C library [libsixel].
 
@@ -31,7 +31,7 @@ following is an incomplete list of terminals that support sixel.
 
 > Above these I only manually test [iTerm2] and [mlterm].
 
-A demo in Iterm2:
+A demo in iTerm2:
 
 <img src="https://user-images.githubusercontent.com/8684355/118017901-b98f4d80-b389-11eb-93cf-0f99c169121d.png" alt="demo" width="1024" height="800">
 
