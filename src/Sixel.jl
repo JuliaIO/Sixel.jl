@@ -32,6 +32,8 @@ default_decoder() = LibSixel.LibSixelDecoder()
 include("encoder.jl")
 include("decoder.jl")
 
+# various frontend and input type supports
+include("frontend/fileio.jl")
 
 # Ref: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 """

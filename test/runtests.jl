@@ -1,8 +1,9 @@
 using Sixel
 using Test
-using ImageCore, IndirectArrays, TestImages
+using ImageCore, IndirectArrays
 using ImageQualityIndexes
 using LinearAlgebra
+using FileIO, TestImages
 
 sixel_output = Sixel.is_sixel_supported()
 sixel_output || @info "Current terminal does not support sixel format sequence. Display tests to stdout will be marked as broken."
@@ -16,4 +17,5 @@ end
 
 @testset "Sixel.jl" begin
     include("backend/libsixel.jl")
+    # include("fileio.jl") # need upstream registration
 end
