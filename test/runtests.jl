@@ -1,6 +1,7 @@
 using Sixel
 using Test
-using ImageCore, TestImages
+using ImageCore, IndirectArrays, TestImages
+using ImageQualityIndexes
 using LinearAlgebra
 
 sixel_output = Sixel.is_sixel_supported()

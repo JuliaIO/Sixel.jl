@@ -217,3 +217,79 @@
         @test bufferdata == String(take!(io))
     end
 end
+
+@testset "decoder" begin
+    @testset "API" begin
+        dec = Sixel.default_decoder()
+        @test dec isa Sixel.LibSixelDecoder
+
+        tmp_file = tempname()        
+        img = repeat(Gray.(0:0.1:0.9), inner=(10, 50))
+        sz = size(img)
+        open(tmp_file, "w") do io
+            sixel_encode(io, img)
+        end
+
+        # IO
+        img_readback = open(tmp_file, "r") do io
+            sixel_decode(io)
+        end
+        @test sz == size(img_readback)
+        @test img_readback isa IndirectArray
+        @test eltype(img_readback) == RGB{N0f8}
+
+        img_readback = open(tmp_file, "r") do io
+            sixel_decode(io, dec)
+        end
+        @test sz == size(img_readback)
+        @test img_readback isa IndirectArray
+        @test eltype(img_readback) == RGB{N0f8}
+
+        img_readback = open(tmp_file, "r") do io
+            sixel_decode(Gray{N0f8}, io)
+        end
+        @test sz == size(img_readback)
+        @test img_readback isa IndirectArray
+        @test eltype(img_readback) == Gray{N0f8}
+
+        # String and Vector{UInt8}
+        bytes_data = open(tmp_file, "r") do io
+            read(io)
+        end
+        string_data = read(tmp_file, String)
+        for src in (bytes_data, string_data)
+            img_readback = sixel_decode(src, dec)
+            @test sz == size(img_readback)
+            @test img_readback isa IndirectArray
+            @test eltype(img_readback) == RGB{N0f8}
+
+            img_readback = sixel_decode(Gray{N0f8}, src, dec)
+            @test sz == size(img_readback)
+            @test img_readback isa IndirectArray
+            @test eltype(img_readback) == Gray{N0f8}
+        end
+    end
+
+    @testset "Quality test" begin
+        enc = Sixel.LibSixelEncoder()
+        dec = Sixel.LibSixelDecoder()
+        tmp_file = tempname()
+        for img in (
+            repeat(Gray.(0:0.1:0.9), inner=(10, 50)),
+            repeat(distinguishable_colors(10), inner=(10, 50)),
+            repeat(Gray.(0:0.1:0.9), inner=(10, 50, 3)),
+            repeat(distinguishable_colors(5), inner=(20, 50, 3))
+        )
+            open(tmp_file, "w") do io
+                sixel_encode(io, img, enc)
+            end
+            
+            img_readback = open(tmp_file, "r") do io
+                sixel_decode(eltype(img), io, dec)
+            end
+
+            # 30 is actually pretty good given that sixel encode always do quantization
+            @test assess_psnr(img, img_readback) > 30
+        end
+    end
+end

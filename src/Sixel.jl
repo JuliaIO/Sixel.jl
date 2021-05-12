@@ -3,6 +3,8 @@ module Sixel
 export sixel_encode, sixel_decode
 
 using ImageCore
+using IndirectArrays # sixel sequence is actually an indexed image format
+
 import REPL: Terminals
 
 include("interface.jl")
@@ -19,7 +21,7 @@ using .LibSixel
 
 # Eventually we will rewrite everything in pure Julia :)
 default_encoder(::AbstractArray) = LibSixel.LibSixelEncoder()
-# default_decoder(::AbstractArray) = LibSIxel.LibSixelDecoder()
+default_decoder() = LibSixel.LibSixelDecoder()
 
 
 # The high-level API to deal with different Julia input types.
@@ -28,7 +30,7 @@ default_encoder(::AbstractArray) = LibSixel.LibSixelEncoder()
 # fancy array types (e.g., transpose, view) or lazy generators, if supported, should be handled here
 # instead of in the backends.
 include("encoder.jl")
-# include("decoder.jl)
+include("decoder.jl")
 
 
 # Ref: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
