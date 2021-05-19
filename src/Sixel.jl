@@ -3,6 +3,7 @@ module Sixel
 export sixel_encode, sixel_decode
 
 using ImageCore
+using OffsetArrays
 using IndirectArrays # sixel sequence is actually an indexed image format
 
 import REPL: Terminals

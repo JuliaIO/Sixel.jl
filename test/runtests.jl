@@ -1,6 +1,6 @@
 using Sixel
 using Test
-using ImageCore, IndirectArrays
+using ImageCore, IndirectArrays, OffsetArrays
 using ImageQualityIndexes
 using LinearAlgebra
 using FileIO, TestImages
