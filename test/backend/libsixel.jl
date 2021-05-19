@@ -214,6 +214,25 @@
         sixel_encode(io, img, transpose=false)
         @test bufferdata == String(take!(io))
     end
+
+    @testset "OffsetArray" begin
+        enc = Sixel.LibSixelEncoder()
+        for img in [
+            repeat(distinguishable_colors(10), inner=(10, )),
+            repeat(distinguishable_colors(10), inner=(10, 50)),
+            repeat(distinguishable_colors(5), inner=(20, 50, 3))
+        ]
+            io = IOBuffer()
+            sixel_encode(io, img, enc)
+            ref = String(take!(io))
+
+            imgo = OffsetArray(img, OffsetArrays.Origin(0))
+            io = IOBuffer()
+            sixel_encode(io, imgo, enc)
+            actual = String(take!(io))
+            @test ref == actual
+        end
+    end
 end
 
 @testset "decoder" begin

@@ -63,6 +63,9 @@ sixel_encode(io::IO, img::AbstractVector, enc::SEC=default_encoder(img); kwargs.
     sixel_encode(io, reshape(img, :, 1), enc; kwargs...)
 
 function sixel_encode(io::IO, img::AbstractArray, enc::SEC=default_encoder(img); transpose=false, kwargs...)
+    # Conversion from OffsetArrays to Array is not very well supported, so we have to de-offset first.
+    img = OffsetArrays.no_offset_view(img)
+
     # make sure it always tiles along row order
     @assert ndims(img) >= 3
     nrow = transpose ? prod(size(img)[3:end]) : 1
