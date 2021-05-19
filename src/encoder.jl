@@ -76,6 +76,8 @@ function sixel_encode(
         img::AbstractMatrix,
         enc::SEC=default_encoder(img);
         transpose=false, kwargs...)
+    # Conversion from OffsetArrays to Array is not very well supported, so we have to de-offset first.
+    img = OffsetArrays.no_offset_view(img)
     if enc isa LibSixelEncoder
         T = canonical_sixel_eltype(enc, eltype(img))
         AT = Array{T, ndims(img)}
