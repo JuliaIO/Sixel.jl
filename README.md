@@ -25,9 +25,9 @@ This package exports two functions: `sixel_encode` and `sixel_decode`.
 One important thing about sixel is that not all terminals support sixel control sequence. The
 following is an incomplete list of terminals that support sixel.
 
-- macOS: [iTerm2] and [mlterm]
-- Linux: [mlterm]
-- Windows: [mintty], [msys2] and [mlterm]
+- macOS: [iTerm2], [contour] and [mlterm]
+- Linux: [mlterm], [contour]
+- Windows: [contour], [mintty], [msys2] and [mlterm]
 
 > Above these I only manually test [iTerm2] and [mlterm].
 
@@ -53,6 +53,7 @@ your terminal actually supports sixel and it returns `false`, please open an iss
 
 <!-- URLs -->
 
+[contour]: https://github.com/christianparpart/contour
 [iTerm2]: https://iterm2.com/
 [kitty]: https://sw.kovidgoyal.net/kitty/
 [libsixel]: https://github.com/saitoha/libsixel
