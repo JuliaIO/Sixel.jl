@@ -26,10 +26,11 @@ One important thing about sixel is that not all terminals support sixel control 
 following is an incomplete list of terminals that support sixel.
 
 - macOS: [iTerm2], [contour] and [mlterm]
-- Linux: [mlterm], [contour]
+- Linux: [mlterm], [contour], [xterm]
 - Windows: [contour], [mintty], [msys2] and [mlterm]
 
 > Above these I only manually test [iTerm2] and [mlterm].
+> To run `xterm` with sixel support, use `$ xterm -xrm "XTerm*decTerminalID: vt340" -xrm "XTerm*numColorRegisters: 256"`.
 
 A demo in iTerm2:
 
@@ -62,3 +63,4 @@ your terminal actually supports sixel and it returns `false`, please open an iss
 [msys2]: https://www.msys2.org/
 [sixel_format_wiki]: https://en.wikipedia.org/wiki/Sixel
 [tmux]: https://github.com/tmux/tmux
+[xterm]: https://invisible-island.net/xterm/
