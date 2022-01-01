@@ -47,7 +47,7 @@ sixel (yet):
 - [kitty] does not support sixel; it has its own image protocol.
 - [Windows terminal does not support sixel](https://github.com/microsoft/terminal/issues/448)
 
-For more information, you can also read the [Terminal requirements](https://github.com/saitoha/libsixel#terminal-requirements) section in the [libsixel] repo.
+For more information, you can also read the [Terminal requirements](https://github.com/libsixel/libsixel#terminal-requirements) section in the [libsixel] repo.
 
 Sixel.jl provides a function to test if your terminal supports it: `Sixel.is_sixel_supported()`. If
 your terminal actually supports sixel and it returns `false`, please open an issue for it.
@@ -57,7 +57,7 @@ your terminal actually supports sixel and it returns `false`, please open an iss
 [contour]: https://github.com/christianparpart/contour
 [iTerm2]: https://iterm2.com/
 [kitty]: https://sw.kovidgoyal.net/kitty/
-[libsixel]: https://github.com/saitoha/libsixel
+[libsixel]: https://github.com/libsixel/libsixel
 [mlterm]: https://sourceforge.net/projects/mlterm/
 [mintty]: https://github.com/mintty/mintty
 [msys2]: https://www.msys2.org/
