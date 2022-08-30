@@ -29,9 +29,9 @@
                 println()
             end
 
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             h, w = size(img, 1), 1
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
             test_sixel_display() do
@@ -73,9 +73,9 @@
                 sixel_encode(img, enc)
                 println()
             end
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
             test_sixel_display() do
                 println(bufferdata)
@@ -115,9 +115,9 @@
                 sixel_encode(img, enc)
                 println()
             end
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             h, w, c = size(img)
             w = w * c
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
@@ -144,9 +144,9 @@
                 sixel_encode(img, enc; transpose=true)
             end
 
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc; transpose=true)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             h, w, c = size(img)
             h = h * c
             h, w = w, h # transpose
@@ -183,9 +183,9 @@
         # lazy array that does not occupy full memory
         img = Diagonal(repeat(distinguishable_colors(5), inner=20))
         w, h = size(img)
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, img)
-        bufferdata = String(take!(io))
+        bufferdata = read(io, String)
         @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
         @info "Test Diagonal array"
         test_sixel_display() do
@@ -199,23 +199,23 @@
         @test stride(img, 1) == 50
         @test stride(ori_img, 1) == 1
 
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, ori_img)
-        bufferdata = String(take!(io))
+        bufferdata = read(io, String)
         h, w = size(ori_img)
         @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, img)
-        @test bufferdata == String(take!(io))
+        @test bufferdata == read(io, String)
 
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, ori_img, transpose=false)
-        bufferdata = String(take!(io))
+        bufferdata = read(io, String)
         h, w = size(ori_img)
         @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, img, transpose=false)
-        @test bufferdata == String(take!(io))
+        @test bufferdata == read(io, String)
     end
 
     @testset "OffsetArray" begin
@@ -225,14 +225,14 @@
             repeat(distinguishable_colors(10), inner=(10, 50)),
             repeat(distinguishable_colors(5), inner=(20, 50, 3))
         )
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            ref = String(take!(io))
+            ref = read(io, String)
 
             imgo = OffsetArray(img, OffsetArrays.Origin(0))
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, imgo, enc)
-            actual = String(take!(io))
+            actual = read(io, String)
             @test ref == actual
         end
     end
