@@ -27,7 +27,7 @@ function (enc::LibSixelEncoder)(io::T, bytes::Matrix) where {T<:IO}
     depth = 3 # unused
 
     dither = SixelDither(bytes, height, width, pixelformat, quality_mode; allocator=enc.allocator)
-    C.sixel_dither_set_transparent(dither.ptr, hasfield(eltype(bytes), :alpha) ? 0 : -1)
+    C.sixel_dither_set_transparent(dither.ptr, eltype(bytes) <: TransparentColor ? 0 : -1)
 
     fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
     output = SixelOutput(fn_write_cb, Ref{T}(io); allocator=enc.allocator)
@@ -78,24 +78,3 @@ canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Color3 = RGB{N0f
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Transparent3 = RGBA{N0f8}
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{T}) where T<:Real = N0f8
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{T}) where T<:Integer = UInt8
-
-# TODO: these special types might have native libsixel support, but I haven't
-#       figured it out yet.
-# canonical_sixel_eltype(::LibSixelEncoder, ::Type{Bool}) = Gray{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::Type{Gray{Bool}}) = Gray{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::Gray24) = Gray{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::RGB24) = RGB{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::ARGB32) = ARGB{N0f8}
-# TODO: For unknown reasons, AGray and GrayA encoded by libsixel is not correctly displayed
-#       in iTerm. Thus here we convert it to `ARGB` types.
-# canonical_sixel_eltype(::LibSixelEncoder, ::Union{AGray, GrayA}) = ARGB{N0f8}
-
-"""
-    default_colorbits(img)
-    default_colorbits(CT)
-
-    Infer the default color mode that is used to encode pixel.
-"""
-# default_colorbits(::AbstractArray{CT}) where CT<:Union{Colorant, Real} = default_colorbits(CT)
-# default_colorbits(::Type{CT}) where CT<:TransparentRGB = ...
-# default_colorbits(::Type{CT}) where CT<:AbstractRGB = ...
