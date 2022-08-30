@@ -16,7 +16,8 @@
     @testset "1d vector" begin
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=10),
-            repeat(distinguishable_colors(10), inner=(10, ))
+            repeat(distinguishable_colors(10), inner=(10,)),
+            repeat(alphacolor.(distinguishable_colors(10), 0.5), inner=(10,))
         )
             @info "1d vector: $(eltype(img))"
             @test size(img) == (100, )
@@ -59,7 +60,8 @@
     @testset "2d matrix" begin
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=(10, 50)),
-            repeat(distinguishable_colors(10), inner=(10, 50))
+            repeat(distinguishable_colors(10), inner=(10, 50)),
+            repeat(coloralpha.(distinguishable_colors(10), 0.5), inner=(10, 50)),
         )
             @info "2d matrix: $(eltype(img))"
             h, w = size(img)
@@ -101,7 +103,8 @@
     @testset "3d array" begin
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=(10, 50, 3)),
-            repeat(distinguishable_colors(5), inner=(20, 50, 3))
+            repeat(distinguishable_colors(5), inner=(20, 50, 3)),
+            repeat(alphacolor.(distinguishable_colors(5), 0.5), inner=(20, 50, 3)),
         )
             @info "3d array: $(eltype(img))"
             @test size(img) == (100, 50, 3)
@@ -217,11 +220,11 @@
 
     @testset "OffsetArray" begin
         enc = Sixel.LibSixelEncoder()
-        for img in [
+        for img in (
             repeat(distinguishable_colors(10), inner=(10, )),
             repeat(distinguishable_colors(10), inner=(10, 50)),
             repeat(distinguishable_colors(5), inner=(20, 50, 3))
-        ]
+        )
             io = IOBuffer()
             sixel_encode(io, img, enc)
             ref = String(take!(io))
@@ -292,13 +295,15 @@ end
         dec = Sixel.LibSixelDecoder()
         tmp_file = tempname()
 
+        alpha_channel = range(0, 1, length=10)
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=10),
-            repeat(distinguishable_colors(10), inner=(10, )),
+            repeat(distinguishable_colors(10), inner=(10,)),
+            repeat(alphacolor.(distinguishable_colors(10), alpha_channel), inner=(10,)),  # add linear alpha channel
             repeat(Gray.(0:0.1:0.9), inner=(10, 50)),
             repeat(distinguishable_colors(10), inner=(10, 50)),
             repeat(Gray.(0:0.1:0.9), inner=(10, 50, 3)),
-            repeat(distinguishable_colors(5), inner=(20, 50, 3))
+            repeat(distinguishable_colors(5), inner=(20, 50, 3)),
         )
             open(tmp_file, "w") do io
                 sixel_encode(io, img, enc)
@@ -306,11 +311,14 @@ end
             
             img_readback = open(tmp_file, "r") do io
                 sixel_decode(eltype(img), io, dec)
-            end
+            end |> x -> reshape(x, size(img))
 
-            img_readback = reshape(img_readback, size(img))
-            # 30 is actually pretty good given that sixel encode always do quantization
-            @test assess_psnr(img, img_readback) > 30
+            if eltype(img) <: TransparentColor
+                @test isapprox.(alpha.(img), repeat(alpha_channel, inner=(10,)), atol=1e-2) |> all
+            else
+                # 30 is actually pretty good given that sixel encode always do quantization
+                @test assess_psnr(img, img_readback) > 30  # FIXME: `TransparentColor`s unsupported
+            end
         end
     end
 end
