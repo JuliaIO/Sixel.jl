@@ -26,7 +26,7 @@ One important thing about sixel is that not all terminals support sixel control 
 following is an incomplete list of terminals that support sixel.
 
 - macOS: [iTerm2], [contour] and [mlterm]
-- Linux: [mlterm], [contour], [xterm]
+- Linux: [mlterm], [contour], [xterm] and [konsole]
 - Windows: [contour], [mintty], [msys2] and [mlterm]
 
 > Above these I only manually test [iTerm2] and [mlterm].
@@ -64,3 +64,4 @@ your terminal actually supports sixel and it returns `false`, please open an iss
 [sixel_format_wiki]: https://en.wikipedia.org/wiki/Sixel
 [tmux]: https://github.com/tmux/tmux
 [xterm]: https://invisible-island.net/xterm/
+[konsole]: https://konsole.kde.org/
