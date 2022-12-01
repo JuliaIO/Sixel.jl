@@ -25,11 +25,11 @@ This package exports two functions: `sixel_encode` and `sixel_decode`.
 One important thing about sixel is that not all terminals support sixel control sequence. The
 following is an incomplete list of terminals that support sixel.
 
-- macOS: [iTerm2], [contour] and [mlterm]
+- macOS: [iTerm2], [contour], [mlterm] and [wezterm]
 - Linux: [mlterm], [contour], [xterm], [konsole] and [wezterm]
-- Windows: [contour], [mintty], [msys2] and [mlterm]
+- Windows: [contour], [mintty], [msys2], [mlterm] and [wezterm]
 
-> Above these I only manually test [iTerm2] and [mlterm].
+> Above these I only manually test [iTerm2], [mlterm] and [wezterm].
 
 > To run `xterm` with sixel support, use `$ xterm -xrm "XTerm*decTerminalID: vt340" -xrm "XTerm*numColorRegisters: 256"`.
 
