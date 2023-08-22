@@ -27,6 +27,7 @@ function (enc::LibSixelEncoder)(io::T, bytes::Matrix) where {T<:IO}
     depth = 3 # unused
 
     dither = SixelDither(bytes, height, width, pixelformat, quality_mode; allocator=enc.allocator)
+    C.sixel_dither_set_transparent(dither.ptr, eltype(bytes) <: TransparentColor ? 0 : -1)
 
     fn_write_cb = @cfunction(sixel_write_callback_function, Cint, (Ptr{Cchar}, Cint, Ref{T}))
     output = SixelOutput(fn_write_cb, Ref{T}(io); allocator=enc.allocator)
@@ -62,9 +63,10 @@ default_pixelformat(::Type{T}) where T<:Union{N0f8, UInt8}  = C.SIXEL_PIXELFORMA
     default_quality_mode(img)
     default_quality_mode(CT)
 
-Infer the default quality mode that used to encode pixel.
+Infer the default quality mode that is used to encode pixel.
 """
 default_quality_mode(::AbstractArray{CT}) where CT<:Union{Colorant, Real} = default_quality_mode(CT)
+default_quality_mode(::Type{CT}) where CT<:TransparentRGB = C.SIXEL_QUALITY_AUTO
 default_quality_mode(::Type{CT}) where CT<:AbstractRGB = C.SIXEL_QUALITY_AUTO
 # CHECK: highcolor is needed for iTerm2 on macOS, check if this works on other terminal
 default_quality_mode(::Type{CT}) where CT<:AbstractGray = C.SIXEL_QUALITY_HIGHCOLOR
@@ -73,18 +75,6 @@ default_quality_mode(::Type{T}) where T<:Union{N0f8, UInt8} = C.SIXEL_QUALITY_HI
 
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Colorant = n0f8(CT)
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Color3 = RGB{N0f8}
+canonical_sixel_eltype(::LibSixelEncoder, ::Type{CT}) where CT<:Transparent3 = RGBA{N0f8}
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{T}) where T<:Real = N0f8
 canonical_sixel_eltype(::LibSixelEncoder, ::Type{T}) where T<:Integer = UInt8
-# strip the alpha channel before sending into libsixel
-canonical_sixel_eltype(lib::LibSixelEncoder, ::Type{CT}) where CT<:Union{ColorAlpha, AlphaColor} =
-    canonical_sixel_eltype(lib, base_color_type(CT))
-# TODO: these special types might have native libsixel support, but I haven't
-#       figured it out yet.
-# canonical_sixel_eltype(::LibSixelEncoder, ::Type{Bool}) = Gray{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::Type{Gray{Bool}}) = Gray{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::Gray24) = Gray{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::RGB24) = RGB{N0f8}
-# canonical_sixel_eltype(::LibSixelEncoder, ::ARGB32) = ARGB{N0f8}
-# TODO: For unknown reasons, AGray and GrayA encoded by libsixel is not correctly displayed
-#       in iTerm. Thus here we convert it to `ARGB` types.
-# canonical_sixel_eltype(::LibSixelEncoder, ::Union{AGray, GrayA}) = ARGB{N0f8}
