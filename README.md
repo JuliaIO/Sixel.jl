@@ -27,7 +27,7 @@ following is an incomplete list of terminals that support sixel.
 
 - macOS: [iTerm2], [contour], [mlterm] and [wezterm]
 - Linux: [mlterm], [contour], [xterm], [konsole] and [wezterm]
-- Windows: [contour], [mintty], [msys2], [mlterm] and [wezterm]
+- Windows: [windows_terminal], [contour], [mintty], [msys2], [mlterm] and [wezterm]
 
 > Above these I only manually test [iTerm2], [mlterm] and [wezterm].
 
@@ -46,7 +46,6 @@ sixel (yet):
 
 - [tmux does not support sixel](https://github.com/tmux/tmux/issues/1613#issuecomment-559940608).
 - [kitty] does not support sixel; it has its own image protocol.
-- [Windows terminal does not support sixel](https://github.com/microsoft/terminal/issues/448)
 
 For more information, you can also read the [Terminal requirements](https://github.com/libsixel/libsixel#terminal-requirements) section in the [libsixel] repo.
 
@@ -55,6 +54,7 @@ your terminal actually supports sixel and it returns `false`, please open an iss
 
 <!-- URLs -->
 
+[windows_terminal]: https://github.com/microsoft/terminal
 [contour]: https://github.com/christianparpart/contour
 [iTerm2]: https://iterm2.com/
 [kitty]: https://sw.kovidgoyal.net/kitty/
