@@ -27,7 +27,7 @@ following is an incomplete list of terminals that support sixel.
 
 - macOS: [iTerm2], [contour], [mlterm] and [wezterm]
 - Linux: [mlterm], [contour], [xterm], [konsole] and [wezterm]
-- Windows: [windows terminal], [contour], [mintty], [msys2], [mlterm] and [wezterm]
+- Windows: [windows_terminal], [contour], [mintty], [msys2], [mlterm] and [wezterm]
 
 > Above these I only manually test [iTerm2], [mlterm] and [wezterm].
 
