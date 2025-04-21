@@ -5,6 +5,8 @@ using ImageQualityIndexes
 using LinearAlgebra
 using FileIO, TestImages
 
+@show stdin stdout stderr
+@show Sixel.TerminalTools.query_terminal("\033[>c")
 sixel_output = Sixel.is_sixel_supported()
 sixel_output || @info "Current terminal does not support sixel format sequence. Display tests to stdout will be marked as broken."
 function test_sixel_display(f)

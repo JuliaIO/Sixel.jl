@@ -47,21 +47,30 @@ function with_raw(f, tty::Terminals.TTYTerminal)
 end
 
 query_terminal(msg, io::IO; kwargs...) = ""
-query_terminal(msg, regex, io::IO; kwargs...) = ("", )
+query_terminal(msg, regex::Regex, io::IO; kwargs...) = ("", )
+query_terminal(msg; kwargs...) = query_terminal(msg, Terminals.TTYTerminal("", stdin, stdout, stderr); kwargs...)
 function query_terminal(msg, tty::TTY; timeout=1)
     term = Terminals.TTYTerminal("", stdin, tty, stderr)
+    return query_terminal(msg, term; timeout=timeout)
+end
+function query_terminal(msg, term::Terminals.TTYTerminal; timeout=1)
+    @show term
     try
-        timeout_call(timeout; pollint=timeout/100) do
+        return timeout_call(()->
             with_raw(term) do
-                write(tty, msg)
-                return transcode(String, readavailable(tty))
+                write(term.out, msg)
+                flush(term.out)
+                sleep(0.5)
+                @info "here"
+                return String(read(term.out))
             end
-        end
+        , timeout; pollint=timeout/10)
     catch e
-        e isa TimeoutException && return ""
+        @debug "Error: $e" ex=(e, catch_backtrace())
+        return ""  # on timeout or error
     end
 end
-function query_terminal(msg, regex, tty::TTY; kwargs...)
+function query_terminal(msg, regex::Regex, tty::TTY; kwargs...)
     response = query_terminal(msg, tty; kwargs...)
     m = match(regex, response)
     isnothing(m) ? ("", ) : Tuple(m.captures)
@@ -76,4 +85,4 @@ end
 # get_text_area(tty=stdout) = displaysize(tty)
 # get_cursor_position(tty=stdout) = parse.(Int, query_terminal("\033[6n", r"\033\[(?<row>[0-9]*);(?<col>[0-9]*)R"))
 
-end # moudle
+end # module
