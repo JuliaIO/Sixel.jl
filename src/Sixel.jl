@@ -38,16 +38,20 @@ include("frontend/fileio.jl")
 
 # Ref: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 """
-    is_sixel_supported(tty=stdout)::Bool
+    is_sixel_supported()::Bool
 
-Check if given terminal `tty` supports sixel format.
+Check if the current terminal supports sixel format.
 
 !!! warning
     (Experiment) The return value is not fully tested on all terminals and all platforms.
 """
-function is_sixel_supported(tty::Base.TTY=stdout)
-    '4' in TerminalTools.query_terminal("\033[0c", tty)
+function is_sixel_supported()
+    return '4' in TerminalTools.query_terminal("\033[>c")
 end
+function is_sixel_supported(tty::TTY)
+    return '4' in TerminalTools.query_terminal("\033[>c", tty)
+end
+is_sixel_supported(ioc::IOContext) = is_sixel_supported(ioc.io)
 is_sixel_supported(io::IO) = false
 
 end # module
