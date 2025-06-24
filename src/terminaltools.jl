@@ -54,7 +54,15 @@ function query_terminal(msg, tty::TTY; timeout=1)
         timeout_call(timeout; pollint=timeout/100) do
             with_raw(term) do
                 write(tty, msg)
-                return transcode(String, readavailable(tty))
+                return @static if Sys.iswindows()
+                    response = ""
+                    while !endswith(response, 'c')
+                        response *= read(stdin, Char)
+                    end
+                    response
+                else
+                    transcode(String, readavailable(tty))
+                end
             end
         end
     catch e
