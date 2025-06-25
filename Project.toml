@@ -1,7 +1,7 @@
 name = "Sixel"
 uuid = "45858cf5-a6b0-47a3-bbea-62219f50df47"
 authors = ["Johnny Chen <johnnychen94@hotmail.com>"]
-version = "0.1.3"
+version = "0.1.4"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
