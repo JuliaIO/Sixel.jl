@@ -46,7 +46,8 @@ Check if given terminal `tty` supports sixel format.
     (Experiment) The return value is not fully tested on all terminals and all platforms.
 """
 function is_sixel_supported(tty::Base.TTY=stdout)
-    '4' in TerminalTools.query_terminal("\033[0c", tty)
+    device_attributes = TerminalTools.query_terminal("\033[0c", tty)
+    "4" in split(chop(device_attributes), ';')
 end
 is_sixel_supported(io::IO) = false
 
