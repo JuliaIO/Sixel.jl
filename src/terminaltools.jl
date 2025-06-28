@@ -67,6 +67,7 @@ function query_terminal(msg, tty::TTY; timeout=1)
         end
     catch e
         e isa TimeoutException && return ""
+        rethrow()
     end
 end
 function query_terminal(msg, regex, tty::TTY; kwargs...)
