@@ -1,9 +1,13 @@
 name: TagBot
+
 on:
   issue_comment:
-    types:
-      - created
+    types: ['created']
   workflow_dispatch:
+    inputs:
+      lookback:
+        default: 10
+
 jobs:
   TagBot:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
