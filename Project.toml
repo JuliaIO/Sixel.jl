@@ -13,6 +13,7 @@ REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 libsixel_jll = "075b6546-f08a-558a-be8f-8157d0f608a5"
 
 [compat]
+Dates = "1"
 FileIO = "1.6"
 ImageCore = "0.8, 0.9, 0.10"
 IndirectArrays = "0.5, 1"
