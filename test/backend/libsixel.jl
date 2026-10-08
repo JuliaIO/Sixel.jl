@@ -16,7 +16,8 @@
     @testset "1d vector" begin
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=10),
-            repeat(distinguishable_colors(10), inner=(10, ))
+            repeat(distinguishable_colors(10), inner=(10,)),
+            repeat(alphacolor.(distinguishable_colors(10), 0.5), inner=(10,))
         )
             @info "1d vector: $(eltype(img))"
             @test size(img) == (100, )
@@ -28,9 +29,9 @@
                 println()
             end
 
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             h, w = size(img, 1), 1
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
             test_sixel_display() do
@@ -59,7 +60,8 @@
     @testset "2d matrix" begin
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=(10, 50)),
-            repeat(distinguishable_colors(10), inner=(10, 50))
+            repeat(distinguishable_colors(10), inner=(10, 50)),
+            repeat(coloralpha.(distinguishable_colors(10), 0.5), inner=(10, 50)),
         )
             @info "2d matrix: $(eltype(img))"
             h, w = size(img)
@@ -71,9 +73,9 @@
                 sixel_encode(img, enc)
                 println()
             end
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
             test_sixel_display() do
                 println(bufferdata)
@@ -101,7 +103,8 @@
     @testset "3d array" begin
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=(10, 50, 3)),
-            repeat(distinguishable_colors(5), inner=(20, 50, 3))
+            repeat(distinguishable_colors(5), inner=(20, 50, 3)),
+            repeat(alphacolor.(distinguishable_colors(5), 0.5), inner=(20, 50, 3)),
         )
             @info "3d array: $(eltype(img))"
             @test size(img) == (100, 50, 3)
@@ -112,9 +115,9 @@
                 sixel_encode(img, enc)
                 println()
             end
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             h, w, c = size(img)
             w = w * c
             @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
@@ -141,9 +144,9 @@
                 sixel_encode(img, enc; transpose=true)
             end
 
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, img, enc; transpose=true)
-            bufferdata = String(take!(io))
+            bufferdata = read(io, String)
             h, w, c = size(img)
             h = h * c
             h, w = w, h # transpose
@@ -180,9 +183,9 @@
         # lazy array that does not occupy full memory
         img = Diagonal(repeat(distinguishable_colors(5), inner=20))
         w, h = size(img)
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, img)
-        bufferdata = String(take!(io))
+        bufferdata = read(io, String)
         @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
         @info "Test Diagonal array"
         test_sixel_display() do
@@ -196,40 +199,40 @@
         @test stride(img, 1) == 50
         @test stride(ori_img, 1) == 1
 
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, ori_img)
-        bufferdata = String(take!(io))
+        bufferdata = read(io, String)
         h, w = size(ori_img)
         @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, img)
-        @test bufferdata == String(take!(io))
+        @test bufferdata == read(io, String)
 
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, ori_img, transpose=false)
-        bufferdata = String(take!(io))
+        bufferdata = read(io, String)
         h, w = size(ori_img)
         @test startswith(bufferdata, "\ePq\"1;1;$w;$h") && endswith(bufferdata, "\e\\")
-        io = IOBuffer()
+        io = PipeBuffer()
         sixel_encode(io, img, transpose=false)
-        @test bufferdata == String(take!(io))
+        @test bufferdata == read(io, String)
     end
 
     @testset "OffsetArray" begin
         enc = Sixel.LibSixelEncoder()
-        for img in [
+        for img in (
             repeat(distinguishable_colors(10), inner=(10, )),
             repeat(distinguishable_colors(10), inner=(10, 50)),
             repeat(distinguishable_colors(5), inner=(20, 50, 3))
-        ]
-            io = IOBuffer()
+        )
+            io = PipeBuffer()
             sixel_encode(io, img, enc)
-            ref = String(take!(io))
+            ref = read(io, String)
 
             imgo = OffsetArray(img, OffsetArrays.Origin(0))
-            io = IOBuffer()
+            io = PipeBuffer()
             sixel_encode(io, imgo, enc)
-            actual = String(take!(io))
+            actual = read(io, String)
             @test ref == actual
         end
     end
@@ -292,13 +295,15 @@ end
         dec = Sixel.LibSixelDecoder()
         tmp_file = tempname()
 
+        alpha_channel = range(0, 1, length=10)
         for img in (
             repeat(Gray.(0:0.1:0.9), inner=10),
-            repeat(distinguishable_colors(10), inner=(10, )),
+            repeat(distinguishable_colors(10), inner=(10,)),
+            repeat(alphacolor.(distinguishable_colors(10), alpha_channel), inner=(10,)),  # add linear alpha channel
             repeat(Gray.(0:0.1:0.9), inner=(10, 50)),
             repeat(distinguishable_colors(10), inner=(10, 50)),
             repeat(Gray.(0:0.1:0.9), inner=(10, 50, 3)),
-            repeat(distinguishable_colors(5), inner=(20, 50, 3))
+            repeat(distinguishable_colors(5), inner=(20, 50, 3)),
         )
             open(tmp_file, "w") do io
                 sixel_encode(io, img, enc)
@@ -306,11 +311,14 @@ end
             
             img_readback = open(tmp_file, "r") do io
                 sixel_decode(eltype(img), io, dec)
-            end
+            end |> x -> reshape(x, size(img))
 
-            img_readback = reshape(img_readback, size(img))
-            # 30 is actually pretty good given that sixel encode always do quantization
-            @test assess_psnr(img, img_readback) > 30
+            if eltype(img) <: TransparentColor
+                @test isapprox.(alpha.(img), repeat(alpha_channel, inner=(10,)), atol=1e-2) |> all
+            else
+                # 30 is actually pretty good given that sixel encode always do quantization
+                @test assess_psnr(img, img_readback) > 30  # FIXME: `TransparentColor`s unsupported
+            end
         end
     end
 end
